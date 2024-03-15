@@ -9,7 +9,8 @@ lift_off_index = np.array([51, 48, 44])
 speed_at_50_feet_index = np.array([56, 54, 50])
 
 # Ground roll table
-sfto_ground_roll = np.array([
+sfto_ground_roll = np.array(
+[
     # 2550 pounds
     [
         [
@@ -71,7 +72,7 @@ sfto_ground_roll = np.array([
             2215,
             2450
         ]
-    ], 
+    ],
     # 2400 pounds
     [
         [
