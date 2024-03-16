@@ -12,9 +12,13 @@ Test project for aircraft performance calculator
 ### Workflow proposed
 * User defines aircraft type
 * User inputs weather conditions / runway data (or we look it up?)
+* User selects weight/balance configuration
 * User receives performance calculations
 
 ### Information provided 
 * Takeoff and landing data
 * Recommended abort/rotation speed
 * Optimal rate of climb
+* V speeds as weight changes during flight
+* Cruise performance
+* Approach configuration (speeds and descent rates for selected approach)
