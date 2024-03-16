@@ -59,3 +59,14 @@ def get_speed_at_50ft(weight: float) -> float:
         np.array(weight), tb.weight_index[::-1], tb.speed_at_50_feet_index[::-1])
 
     return speed_at_50ft
+
+def include_wind(distance: float, runway_heading: float, wind_direction: float, wind_speed: float) -> float:
+    """
+    Recompute a takeoff/landing distance to include the effects of wind (knots).
+
+    Returns a new distance in feet as float.
+    """
+    new_distance = distance
+
+    return new_distance
+
