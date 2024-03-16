@@ -8,3 +8,13 @@ Test project for aircraft performance calculator
 * Takeoff ground roll increases about 10% for every 1000 feet of density altitude
 * TOD planning divide altitude you need to lose by 300 for NM from target point
 * ILS course width at threshold 1/2 dot deflection about 1/2 runway width
+
+### Workflow proposed
+* User defines aircraft type
+* User inputs weather conditions / runway data (or we look it up?)
+* User receives performance calculations
+
+### Information provided 
+* Takeoff and landing data
+* Recommended abort/rotation speed
+* Optimal rate of climb
