@@ -5,18 +5,11 @@ import performance_172S as pf
 st.markdown("# Takeoff Performance")
 st.sidebar.markdown("# Takeoff Performance")
 
-st.write(
-    """
-         ## Cessna 172S
-         """
-)
-st.write("---")
 
-st.write(
-    """
-        ### Define weather/aircraft parameters
-        """
-)
+"""
+## Cessna 172S
+### Define weather/aircraft parameters
+"""
 
 # Define temperature
 user_temperature = st.slider("Temperature (degC):", 0, 40)
