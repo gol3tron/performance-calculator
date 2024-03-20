@@ -4,7 +4,9 @@ import scipy as sp
 import tables_172S as tb
 
 
-def get_ground_roll_sfto(pressure_altitude: float, weight: float, temperature: float) -> float:
+def get_ground_roll_sfto(
+    pressure_altitude: float, weight: float, temperature: float
+) -> float:
     """
     Compute the ground roll for short field takeoff in feet based on weight, pressure altitude and temperature.
 
@@ -18,7 +20,10 @@ def get_ground_roll_sfto(pressure_altitude: float, weight: float, temperature: f
 
     return ground_roll
 
-def get_dist_50ft_sfto(pressure_altitude: float, weight: float, temperature: float) -> float:
+
+def get_dist_50ft_sfto(
+    pressure_altitude: float, weight: float, temperature: float
+) -> float:
     """
     Compute the distance (in feet) at 50 ft height for short field takeoff based on weight, pressure altitude and temperature.
 
@@ -26,12 +31,12 @@ def get_dist_50ft_sfto(pressure_altitude: float, weight: float, temperature: flo
     """
 
     # Compute ground_roll
-    points = (tb.weight_index, tb.temperature_index,
-              tb.pressure_altitude_index)
+    points = (tb.weight_index, tb.temperature_index, tb.pressure_altitude_index)
     point = np.array([weight, temperature, pressure_altitude])
     dist_50ft = sp.interpolate.interpn(points, tb.sfto_dist_50_feet, point)[0]
 
     return dist_50ft
+
 
 def get_lift_off_speed(weight: float) -> float:
     """
@@ -42,7 +47,8 @@ def get_lift_off_speed(weight: float) -> float:
 
     # Compute lift_off_speed
     lift_off_speed = np.interp(
-        np.array(weight), tb.weight_index[::-1], tb.lift_off_index[::-1])
+        np.array(weight), tb.weight_index[::-1], tb.lift_off_index[::-1]
+    )
 
     return lift_off_speed
 
@@ -56,11 +62,15 @@ def get_speed_at_50ft(weight: float) -> float:
 
     # Compute lift_off_speed
     speed_at_50ft = np.interp(
-        np.array(weight), tb.weight_index[::-1], tb.speed_at_50_feet_index[::-1])
+        np.array(weight), tb.weight_index[::-1], tb.speed_at_50_feet_index[::-1]
+    )
 
     return speed_at_50ft
 
-def include_wind(distance: float, runway_heading: float, wind_direction: float, wind_speed: float) -> float:
+
+def include_wind(
+    distance: float, runway_heading: float, wind_direction: float, wind_speed: float
+) -> float:
     """
     Recompute a takeoff/landing distance to include the effects of wind (knots).
 
@@ -69,4 +79,3 @@ def include_wind(distance: float, runway_heading: float, wind_direction: float, 
     new_distance = distance
 
     return new_distance
-
