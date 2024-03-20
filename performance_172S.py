@@ -4,6 +4,16 @@ import scipy as sp
 import tables_172S as tb
 
 
+def get_pressure_altitude(altimiter: float, true_altitude: float) -> float:
+    """
+    Computer the pressure altitude based on altimeter setting and true altitude.
+
+    Return a pressure altitude (feet MSL) as a float value.
+    """
+    pressure_altitude = (29.92 - altimiter) * 1000 + true_altitude
+    return pressure_altitude
+
+
 def get_ground_roll_sfto(
     pressure_altitude: float, weight: float, temperature: float
 ) -> float:
