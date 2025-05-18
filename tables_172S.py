@@ -3,8 +3,10 @@ import numpy as np
 
 # Short field takeoff distance
 weight_index = np.array([2550, 2400, 2200])
-temperature_index = np.arange(0, 40, 10)
-pressure_altitude_index = np.arange(0, 8000, 1000)
+# Changed to match 5 rows in sfto_ground_roll
+temperature_index = np.array([0, 10, 20, 30, 40])
+# Changed to match 9 columns in sfto_ground_roll
+pressure_altitude_index = np.arange(0, 9000, 1000)
 lift_off_index = np.array([51, 48, 44])
 speed_at_50_feet_index = np.array([56, 54, 50])
 

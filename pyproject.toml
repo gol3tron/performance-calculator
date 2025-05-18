@@ -1,21 +1,17 @@
-[tool.poetry]
+[project]
 name = "performance-calculator"
 version = "0.1.0"
-description = "Test application for developing an aircraft performance calculator"
-authors = ["Adam Goler"]
-license = "Private and for internal use only, any unauthorized use is strictly prohibited without explicit permission!"
+description = "Streamlit based performance calculator for GA airplanes."
+authors = [{ name = "gol3tron", email = "adamgoler@gmail.com" }]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-scipy = "^1.12.0"
-numpy = "^1.26.4"
-jupyter = "^1.0.0"
-ipykernel = "^6.29.3"
-geopy = "^2.4.1"
-streamlit = "^1.32.2"
+requires-python = ">=3.13"
+dependencies = [
+  "numpy (>=2.2.5,<3.0.0)",
+  "scipy (>=1.15.3,<2.0.0)",
+  "streamlit (>=1.45.1,<2.0.0)",
+]
 
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
