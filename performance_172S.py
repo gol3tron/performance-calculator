@@ -187,3 +187,206 @@ def include_wind(
     new_distance = distance
 
     return new_distance
+
+
+def get_true_airspeed(
+    indicated_airspeed: float, pressure_altitude: float, temperature_celsius: float
+) -> float:
+    """
+    Calculate true airspeed from indicated airspeed, pressure altitude, and temperature.
+    
+    Args:
+        indicated_airspeed: Indicated airspeed in knots
+        pressure_altitude: Pressure altitude in feet
+        temperature_celsius: Temperature in degrees Celsius
+    
+    Returns:
+        True airspeed in knots
+    """
+    # Standard atmosphere at sea level
+    standard_temp_kelvin = 288.15  # 15°C in Kelvin
+    temp_kelvin = temperature_celsius + 273.15
+    
+    # Temperature ratio
+    temp_ratio = temp_kelvin / standard_temp_kelvin
+    
+    # Pressure ratio (simplified for altitude)
+    # Using standard lapse rate of 1.98°C per 1000 ft
+    pressure_ratio = (1 - (pressure_altitude * 6.5e-6)) ** 5.2561
+    
+    # Density ratio
+    density_ratio = pressure_ratio / temp_ratio
+    
+    # True airspeed calculation
+    true_airspeed = indicated_airspeed / math.sqrt(density_ratio)
+    
+    return true_airspeed
+
+
+def get_ground_speed(
+    true_airspeed: float, 
+    aircraft_heading: float, 
+    wind_direction: float, 
+    wind_speed: float
+) -> float:
+    """
+    Calculate ground speed from true airspeed and wind conditions.
+    
+    Args:
+        true_airspeed: True airspeed in knots
+        aircraft_heading: Aircraft magnetic heading in degrees
+        wind_direction: Wind direction in degrees (direction wind is coming from)
+        wind_speed: Wind speed in knots
+    
+    Returns:
+        Ground speed in knots
+    """
+    # Convert to radians
+    deg_to_rad = math.pi / 180
+    
+    # Calculate relative wind angle (wind direction relative to aircraft heading)
+    # Wind direction is where wind is coming FROM
+    relative_wind_angle = (wind_direction - aircraft_heading) % 360
+    
+    # Calculate wind components
+    # Positive component means headwind (reduces ground speed)
+    headwind_component = wind_speed * math.cos(deg_to_rad * relative_wind_angle)
+    
+    # Ground speed = TAS - headwind component (headwind reduces ground speed)
+    ground_speed = true_airspeed - headwind_component
+    
+    return max(0, ground_speed)  # Ensure non-negative ground speed
+
+
+def interpolate_parameter(
+    start_altitude: float,
+    end_altitude: float,
+    current_altitude: float,
+    start_value: float,
+    end_value: float
+) -> float:
+    """
+    Linearly interpolate a parameter between two altitudes.
+    
+    Args:
+        start_altitude: Starting altitude in feet
+        end_altitude: Ending altitude in feet  
+        current_altitude: Current altitude for interpolation in feet
+        start_value: Parameter value at starting altitude
+        end_value: Parameter value at ending altitude
+    
+    Returns:
+        Interpolated parameter value
+    """
+    if start_altitude == end_altitude:
+        return start_value
+    
+    # Linear interpolation
+    ratio = (current_altitude - start_altitude) / (end_altitude - start_altitude)
+    interpolated_value = start_value + ratio * (end_value - start_value)
+    
+    return interpolated_value
+
+
+def calculate_climb_gradient(
+    start_altitude: float,
+    end_altitude: float,
+    start_climb_rate: float,
+    end_climb_rate: float,
+    start_indicated_airspeed: float,
+    start_temp: float,
+    end_temp: float,
+    start_wind_dir: float,
+    start_wind_speed: float,
+    end_wind_dir: float,
+    end_wind_speed: float,
+    start_heading: float,
+    end_heading: float,
+    altimeter_setting: float
+) -> tuple[float, float, float]:
+    """
+    Calculate climb performance including max true airspeed, max ground speed, 
+    and minimum climb gradient.
+    
+    Returns:
+        Tuple of (max_true_airspeed, max_ground_speed, min_climb_gradient_ft_per_nm)
+    """
+    altitude_change = end_altitude - start_altitude
+    if altitude_change <= 0:
+        return 0.0, 0.0, 0.0
+    
+    # Sample points throughout the climb (every 500 feet)
+    sample_interval = 500
+    sample_altitudes = []
+    current_alt = start_altitude
+    while current_alt <= end_altitude:
+        sample_altitudes.append(current_alt)
+        current_alt += sample_interval
+    
+    # Ensure we include the end altitude
+    if sample_altitudes[-1] != end_altitude:
+        sample_altitudes.append(end_altitude)
+    
+    max_true_airspeed = 0.0
+    max_ground_speed = 0.0
+    total_time = 0.0
+    total_distance = 0.0
+    
+    # Calculate performance at each sample point
+    for i, altitude in enumerate(sample_altitudes[:-1]):
+        next_altitude = sample_altitudes[i + 1]
+        segment_altitude_change = next_altitude - altitude
+        
+        # Interpolate parameters for this segment
+        avg_altitude = (altitude + next_altitude) / 2
+        
+        # Interpolate climb rate
+        climb_rate = interpolate_parameter(
+            start_altitude, end_altitude, avg_altitude, start_climb_rate, end_climb_rate
+        )
+        
+        # Interpolate temperature  
+        temp = interpolate_parameter(
+            start_altitude, end_altitude, avg_altitude, start_temp, end_temp
+        )
+        
+        # Interpolate wind conditions
+        wind_dir = interpolate_parameter(
+            start_altitude, end_altitude, avg_altitude, start_wind_dir, end_wind_dir
+        )
+        wind_speed = interpolate_parameter(
+            start_altitude, end_altitude, avg_altitude, start_wind_speed, end_wind_speed
+        )
+        
+        # Interpolate heading
+        # Handle magnetic heading interpolation (circular)
+        heading_diff = (end_heading - start_heading) % 360
+        if heading_diff > 180:
+            heading_diff -= 360
+        heading = (start_heading + interpolate_parameter(
+            start_altitude, end_altitude, avg_altitude, 0, heading_diff
+        )) % 360
+        
+        # Calculate pressure altitude for this segment
+        pressure_altitude = get_pressure_altitude(altimeter_setting, avg_altitude)
+        
+        # Calculate true airspeed
+        true_airspeed = get_true_airspeed(start_indicated_airspeed, pressure_altitude, temp)
+        max_true_airspeed = max(max_true_airspeed, true_airspeed)
+        
+        # Calculate ground speed
+        ground_speed = get_ground_speed(true_airspeed, heading, wind_dir, wind_speed)
+        max_ground_speed = max(max_ground_speed, ground_speed)
+        
+        # Calculate time and distance for this segment
+        if climb_rate > 0:
+            segment_time = segment_altitude_change / climb_rate  # minutes
+            segment_distance = (ground_speed / 60) * segment_time  # nautical miles
+            
+            total_time += segment_time
+            total_distance += segment_distance
+    
+    # Calculate minimum climb gradient in ft/nm
+    min_climb_gradient = altitude_change / total_distance if total_distance > 0 else 0.0
+    
+    return max_true_airspeed, max_ground_speed, min_climb_gradient
