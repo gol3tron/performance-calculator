@@ -20,7 +20,8 @@ Currently focused on the Cessna 172S, this tool provides data-driven calculation
 - **Takeoff Performance**: Calculate ground roll and distance to clear a 50ft obstacle based on 
   weight, temperature, elevation, wind, and runway conditions.
   
-- **Climb Performance**: *(Coming soon)* Calculate time, fuel, and distance to climb to a desired altitude.
+- **Climb Performance**: Calculate climb gradients with interpolated conditions throughout the climb,
+  including maximum true airspeed, maximum ground speed, and minimum climb gradient in ft/nm.
 
 - **Cruise Performance**: *(Coming soon)* Calculate fuel flow and speed at various power settings.
 
