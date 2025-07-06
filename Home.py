@@ -23,7 +23,8 @@ Currently focused on the Cessna 172S, this tool provides data-driven calculation
 - **Climb Performance**: Calculate climb gradients with interpolated conditions throughout the climb,
   including maximum true airspeed, maximum ground speed, and minimum climb gradient in ft/nm.
 
-- **Cruise Performance**: *(Coming soon)* Calculate fuel flow and speed at various power settings.
+- **Cruise Performance**: Calculate true airspeed, fuel flow, and endurance based on power settings, 
+  altitude, and temperature conditions. Supports both built-in 172S data and custom performance data entry.
 
 ### How to Use:
 
