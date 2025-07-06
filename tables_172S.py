@@ -104,7 +104,8 @@ distance_to_climb = np.array([0, 2, 4, 6, 8, 10, 13, 16, 19, 22, 27, 32, 38])
 cruise_pressure_altitudes = np.array([2000, 4000, 6000, 8000, 10000, 12000])
 
 # Standard temperatures at altitudes (degrees Celsius)
-cruise_temperatures = np.array([15, 5, -5, -15, -25, -35])
+# Only two temperatures are used in the actual tables
+cruise_temperatures = np.array([15, 5])
 
 # Manifold pressure settings (inches Hg)
 cruise_manifold_pressures = np.array([20, 22, 24])
@@ -204,6 +205,100 @@ cruise_true_airspeed = np.array([
             [136, 141, 146, 151],  # 22" Hg
             [141, 146, 151, 156],  # 24" Hg
         ],
+    ],
+])
+
+# Simplified cruise performance tables without manifold pressure requirement
+# For aircraft without manifold pressure gauges - uses typical 75% power settings
+# True airspeed data (knots) - [altitude][temperature][rpm]
+cruise_true_airspeed_no_mp = np.array([
+    # 2000 ft
+    [
+        # 15°C
+        [113, 118, 123, 128],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [116, 121, 126, 131],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 4000 ft
+    [
+        # 15°C
+        [118, 123, 128, 133],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [121, 126, 131, 136],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 6000 ft
+    [
+        # 15°C
+        [123, 128, 133, 138],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [126, 131, 136, 141],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 8000 ft
+    [
+        # 15°C
+        [128, 133, 138, 143],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [131, 136, 141, 146],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 10000 ft
+    [
+        # 15°C
+        [133, 138, 143, 148],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [136, 141, 146, 151],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 12000 ft
+    [
+        # 15°C
+        [138, 143, 148, 153],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [141, 146, 151, 156],  # RPM: 2200, 2300, 2400, 2500
+    ],
+])
+
+# Fuel flow data (gallons per hour) - [altitude][temperature][rpm]
+cruise_fuel_flow_no_mp = np.array([
+    # 2000 ft
+    [
+        # 15°C
+        [8.9, 9.6, 10.3, 11.0],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [8.7, 9.4, 10.1, 10.8],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 4000 ft
+    [
+        # 15°C
+        [8.7, 9.4, 10.1, 10.8],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [8.5, 9.2, 9.9, 10.6],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 6000 ft
+    [
+        # 15°C
+        [8.5, 9.2, 9.9, 10.6],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [8.3, 9.0, 9.7, 10.4],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 8000 ft
+    [
+        # 15°C
+        [8.3, 9.0, 9.7, 10.4],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [8.1, 8.8, 9.5, 10.2],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 10000 ft
+    [
+        # 15°C
+        [8.1, 8.8, 9.5, 10.2],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [7.9, 8.6, 9.3, 10.0],  # RPM: 2200, 2300, 2400, 2500
+    ],
+    # 12000 ft
+    [
+        # 15°C
+        [7.9, 8.6, 9.3, 10.0],  # RPM: 2200, 2300, 2400, 2500
+        # 5°C
+        [7.7, 8.4, 9.1, 9.8],  # RPM: 2200, 2300, 2400, 2500
     ],
 ])
 

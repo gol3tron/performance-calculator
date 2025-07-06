@@ -62,15 +62,26 @@ with tab1:
         
         st.subheader("Power Settings")
         
-        # Manifold pressure
-        manifold_pressure = st.slider(
-            "Manifold pressure (inHg):",
-            min_value=18.0,
-            max_value=25.0,
-            value=22.0,
-            step=0.1,
-            help="Desired manifold pressure setting"
+        # Manifold pressure toggle
+        use_manifold_pressure = st.checkbox(
+            "Aircraft has manifold pressure gauge",
+            value=True,
+            help="Uncheck this if your aircraft does not have a manifold pressure gauge (e.g., fixed-pitch propeller aircraft)"
         )
+        
+        # Conditional manifold pressure input
+        if use_manifold_pressure:
+            manifold_pressure = st.slider(
+                "Manifold pressure (inHg):",
+                min_value=18.0,
+                max_value=25.0,
+                value=22.0,
+                step=0.1,
+                help="Desired manifold pressure setting"
+            )
+        else:
+            manifold_pressure = None
+            st.info("ℹ️ Performance will be calculated based on RPM, altitude, and temperature only.")
         
         # RPM
         rpm = st.slider(
@@ -130,9 +141,9 @@ with tab1:
             true_airspeed, fuel_flow = pf.calculate_cruise_performance(
                 cruise_altitude,
                 outside_air_temp,
-                manifold_pressure,
                 rpm,
-                altimeter_setting
+                altimeter_setting,
+                manifold_pressure
             )
             
             # Calculate endurance
@@ -225,13 +236,25 @@ with tab2:
                 value=15
             )
             
-            base_mp = st.number_input(
-                "Reference manifold pressure (inHg):",
-                min_value=18.0,
-                max_value=25.0,
-                value=22.0,
-                step=0.1
+            # Manifold pressure toggle for custom data
+            custom_use_mp = st.checkbox(
+                "Include manifold pressure in custom data",
+                value=True,
+                key="custom_mp_toggle",
+                help="Uncheck if your aircraft performance data doesn't include manifold pressure"
             )
+            
+            if custom_use_mp:
+                base_mp = st.number_input(
+                    "Reference manifold pressure (inHg):",
+                    min_value=18.0,
+                    max_value=25.0,
+                    value=22.0,
+                    step=0.1
+                )
+            else:
+                base_mp = None
+                st.info("ℹ️ Custom performance data will be based on RPM only.")
         
         with data_col2:
             base_rpm = st.number_input(
@@ -292,14 +315,19 @@ with tab2:
         )
     
     with custom_col2:
-        custom_mp = st.slider(
-            "Desired manifold pressure (inHg):",
-            min_value=18.0,
-            max_value=25.0,
-            value=22.0,
-            step=0.1,
-            key="custom_mp"
-        )
+        # Conditional manifold pressure input for custom calculations
+        if custom_use_mp:
+            custom_mp = st.slider(
+                "Desired manifold pressure (inHg):",
+                min_value=18.0,
+                max_value=25.0,
+                value=22.0,
+                step=0.1,
+                key="custom_mp"
+            )
+        else:
+            custom_mp = None
+            st.info("ℹ️ Calculation will use RPM only for power setting.")
         
         custom_rpm = st.slider(
             "Desired RPM:",
@@ -352,9 +380,9 @@ with tab2:
             custom_tas, custom_fuel_flow = pf.calculate_cruise_performance(
                 custom_altitude,
                 custom_temp,
-                custom_mp,
                 custom_rpm,
                 custom_altimeter,
+                custom_mp,
                 user_data
             )
             
@@ -411,12 +439,25 @@ with st.expander("📚 How are these calculations performed?"):
        - Calculated fuel flow rate
        - Specified fuel reserves
     
+    ### Aircraft Compatibility
+    
+    This calculator supports two types of aircraft:
+    
+    **With Manifold Pressure Gauge:**
+    - Uses manifold pressure, RPM, altitude, and temperature for calculations
+    - Provides more precise power setting control
+    - Typical for variable-pitch propeller aircraft
+    
+    **Without Manifold Pressure Gauge:**
+    - Uses only RPM, altitude, and temperature for calculations
+    - Simpler power setting based on RPM only
+    - Typical for fixed-pitch propeller aircraft
+    
     ### Built-in Data
     
-    The built-in performance data is based on typical Cessna 172S performance at:
-    - Altitudes: 2,000 to 12,000 feet
-    - Temperatures: Standard and above/below standard
-    - Power settings: 20-24 inches Hg manifold pressure, 2200-2500 RPM
+    The built-in performance data is based on typical Cessna 172S performance:
+    - **With MP:** Altitudes (2,000-12,000 ft), temperatures, manifold pressures (20-24 inHg), RPM (2200-2500)
+    - **Without MP:** Altitudes (2,000-12,000 ft), temperatures, RPM (2200-2500) at typical 75% power settings
     
     ### Important Notes
     
