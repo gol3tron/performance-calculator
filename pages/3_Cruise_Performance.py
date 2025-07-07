@@ -40,14 +40,36 @@ with tab1:
             help="Enter your desired cruise altitude in feet MSL"
         )
         
-        # Temperature input
-        outside_air_temp = st.slider(
-            "Outside air temperature (°C):",
-            min_value=-40,
-            max_value=40,
-            value=15,
-            help="Predicted outside air temperature at cruise altitude"
+        # Temperature mode toggle
+        temp_mode = st.radio(
+            "Temperature input mode:",
+            ["True temperature (°C)", "ISA deviation (°C)"],
+            help="Choose between absolute temperature or deviation from standard atmosphere"
         )
+        
+        # Temperature input based on mode
+        if temp_mode == "True temperature (°C)":
+            outside_air_temp = st.slider(
+                "Outside air temperature (°C):",
+                min_value=-40,
+                max_value=40,
+                value=15,
+                help="Predicted outside air temperature at cruise altitude"
+            )
+        else:
+            # ISA deviation mode
+            isa_deviation = st.slider(
+                "ISA deviation (°C):",
+                min_value=-30,
+                max_value=30,
+                value=0,
+                help="Temperature difference from standard atmosphere (positive = warmer than standard)"
+            )
+            # Calculate ISA standard temperature at altitude
+            isa_standard_temp = 15 - (1.98 * cruise_altitude / 1000)
+            outside_air_temp = isa_standard_temp + isa_deviation
+            st.info(f"ℹ️ ISA standard temperature at {cruise_altitude} ft: {isa_standard_temp:.1f}°C")
+            st.info(f"ℹ️ Actual temperature: {outside_air_temp:.1f}°C")
         
         # Altimeter setting
         altimeter_setting = st.number_input(
@@ -296,13 +318,38 @@ with tab2:
             key="custom_altitude"
         )
         
-        custom_temp = st.slider(
-            "Outside air temperature (°C):",
-            min_value=-40,
-            max_value=40,
-            value=15,
-            key="custom_temp"
+        # Temperature mode toggle for custom data
+        custom_temp_mode = st.radio(
+            "Temperature input mode:",
+            ["True temperature (°C)", "ISA deviation (°C)"],
+            key="custom_temp_mode",
+            help="Choose between absolute temperature or deviation from standard atmosphere"
         )
+        
+        # Temperature input based on mode
+        if custom_temp_mode == "True temperature (°C)":
+            custom_temp = st.slider(
+                "Outside air temperature (°C):",
+                min_value=-40,
+                max_value=40,
+                value=15,
+                key="custom_temp"
+            )
+        else:
+            # ISA deviation mode
+            custom_isa_deviation = st.slider(
+                "ISA deviation (°C):",
+                min_value=-30,
+                max_value=30,
+                value=0,
+                key="custom_isa_deviation",
+                help="Temperature difference from standard atmosphere (positive = warmer than standard)"
+            )
+            # Calculate ISA standard temperature at altitude
+            custom_isa_standard_temp = 15 - (1.98 * custom_altitude / 1000)
+            custom_temp = custom_isa_standard_temp + custom_isa_deviation
+            st.info(f"ℹ️ ISA standard temperature at {custom_altitude} ft: {custom_isa_standard_temp:.1f}°C")
+            st.info(f"ℹ️ Actual temperature: {custom_temp:.1f}°C")
         
         custom_altimeter = st.number_input(
             "Altimeter setting (inHg):",
