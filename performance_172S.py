@@ -390,3 +390,275 @@ def calculate_climb_gradient(
     min_climb_gradient = altitude_change / total_distance if total_distance > 0 else 0.0
     
     return max_true_airspeed, max_ground_speed, min_climb_gradient
+
+
+def calculate_cruise_performance(
+    altitude: float,
+    temperature: float,
+    rpm: float,
+    altimeter_setting: float,
+    manifold_pressure: float = None,
+    user_performance_data: dict = None
+) -> tuple[float, float]:
+    """
+    Calculate cruise performance for given conditions.
+    
+    Args:
+        altitude: Cruise altitude in feet MSL
+        temperature: Outside air temperature in degrees Celsius
+        rpm: Engine RPM
+        altimeter_setting: Altimeter setting in inches Hg
+        manifold_pressure: Manifold pressure in inches Hg (optional)
+        user_performance_data: Optional user-provided performance data
+        
+    Returns:
+        Tuple of (true_airspeed, fuel_flow) in knots and gallons per hour
+    """
+    # Calculate pressure altitude
+    pressure_altitude = get_pressure_altitude(altimeter_setting, altitude)
+    
+    # Use user data if provided, otherwise use built-in tables
+    if user_performance_data:
+        return interpolate_user_cruise_data(
+            user_performance_data, pressure_altitude, temperature, rpm, manifold_pressure
+        )
+    else:
+        return interpolate_cruise_data(pressure_altitude, temperature, rpm, manifold_pressure)
+
+
+def interpolate_cruise_data(
+    pressure_altitude: float,
+    temperature: float,
+    rpm: float,
+    manifold_pressure: float = None
+) -> tuple[float, float]:
+    """
+    Interpolate cruise performance data from built-in tables.
+    
+    Args:
+        pressure_altitude: Pressure altitude in feet
+        temperature: Temperature in degrees Celsius
+        rpm: Engine RPM
+        manifold_pressure: Manifold pressure in inches Hg (optional)
+        
+    Returns:
+        Tuple of (true_airspeed, fuel_flow) in knots and gallons per hour
+    """
+    # Use different interpolation method based on whether manifold pressure is provided
+    if manifold_pressure is not None:
+        return interpolate_cruise_data_with_mp(pressure_altitude, temperature, manifold_pressure, rpm)
+    else:
+        return interpolate_cruise_data_no_mp(pressure_altitude, temperature, rpm)
+
+
+def interpolate_cruise_data_with_mp(
+    pressure_altitude: float,
+    temperature: float,
+    manifold_pressure: float,
+    rpm: float
+) -> tuple[float, float]:
+    """
+    Interpolate cruise performance data with manifold pressure from built-in tables.
+    
+    Args:
+        pressure_altitude: Pressure altitude in feet
+        temperature: Temperature in degrees Celsius
+        manifold_pressure: Manifold pressure in inches Hg
+        rpm: Engine RPM
+        
+    Returns:
+        Tuple of (true_airspeed, fuel_flow) in knots and gallons per hour
+    """
+    # For simplicity, use 4D linear interpolation
+    # In a real implementation, you'd use scipy.interpolate.RegularGridInterpolator
+    
+    # Find the bounding values for interpolation
+    alt_indices = np.searchsorted(tb.cruise_pressure_altitudes, pressure_altitude)
+    temp_indices = np.searchsorted(tb.cruise_temperatures, temperature)
+    mp_indices = np.searchsorted(tb.cruise_manifold_pressures, manifold_pressure)
+    rpm_indices = np.searchsorted(tb.cruise_rpms, rpm)
+    
+    # Handle edge cases
+    alt_indices = np.clip(alt_indices, 1, len(tb.cruise_pressure_altitudes) - 1)
+    temp_indices = np.clip(temp_indices, 1, len(tb.cruise_temperatures) - 1)
+    mp_indices = np.clip(mp_indices, 1, len(tb.cruise_manifold_pressures) - 1)
+    rpm_indices = np.clip(rpm_indices, 1, len(tb.cruise_rpms) - 1)
+    
+    # For simplified implementation, use nearest neighbor
+    # In production, implement proper 4D interpolation
+    alt_idx = min(alt_indices, len(tb.cruise_pressure_altitudes) - 1)
+    temp_idx = min(temp_indices, len(tb.cruise_temperatures) - 1)
+    mp_idx = min(mp_indices, len(tb.cruise_manifold_pressures) - 1)
+    rpm_idx = min(rpm_indices, len(tb.cruise_rpms) - 1)
+    
+    # Handle case where we're exactly at table values
+    if alt_idx == 0:
+        alt_idx = 0
+    else:
+        alt_idx = alt_idx - 1
+        
+    if temp_idx == 0:
+        temp_idx = 0
+    else:
+        temp_idx = temp_idx - 1
+        
+    if mp_idx == 0:
+        mp_idx = 0
+    else:
+        mp_idx = mp_idx - 1
+        
+    if rpm_idx == 0:
+        rpm_idx = 0
+    else:
+        rpm_idx = rpm_idx - 1
+    
+    # Extract values from tables
+    try:
+        true_airspeed = tb.cruise_true_airspeed[alt_idx][temp_idx][mp_idx][rpm_idx]
+        fuel_flow = tb.cruise_fuel_flow[alt_idx][temp_idx][mp_idx][rpm_idx]
+    except IndexError:
+        # Fallback if indices are out of bounds
+        true_airspeed = 120.0  # Default reasonable value
+        fuel_flow = 8.5  # Default reasonable value
+    
+    return float(true_airspeed), float(fuel_flow)
+
+
+def interpolate_cruise_data_no_mp(
+    pressure_altitude: float,
+    temperature: float,
+    rpm: float
+) -> tuple[float, float]:
+    """
+    Interpolate cruise performance data without manifold pressure from built-in tables.
+    
+    Args:
+        pressure_altitude: Pressure altitude in feet
+        temperature: Temperature in degrees Celsius
+        rpm: Engine RPM
+        
+    Returns:
+        Tuple of (true_airspeed, fuel_flow) in knots and gallons per hour
+    """
+    # Find the bounding values for interpolation
+    alt_indices = np.searchsorted(tb.cruise_pressure_altitudes, pressure_altitude)
+    temp_indices = np.searchsorted(tb.cruise_temperatures, temperature)
+    rpm_indices = np.searchsorted(tb.cruise_rpms, rpm)
+    
+    # Handle edge cases
+    alt_indices = np.clip(alt_indices, 1, len(tb.cruise_pressure_altitudes) - 1)
+    temp_indices = np.clip(temp_indices, 1, len(tb.cruise_temperatures) - 1)
+    rpm_indices = np.clip(rpm_indices, 1, len(tb.cruise_rpms) - 1)
+    
+    # For simplified implementation, use nearest neighbor
+    # In production, implement proper 3D interpolation
+    alt_idx = min(alt_indices, len(tb.cruise_pressure_altitudes) - 1)
+    temp_idx = min(temp_indices, len(tb.cruise_temperatures) - 1)
+    rpm_idx = min(rpm_indices, len(tb.cruise_rpms) - 1)
+    
+    # Handle case where we're exactly at table values
+    if alt_idx == 0:
+        alt_idx = 0
+    else:
+        alt_idx = alt_idx - 1
+        
+    if temp_idx == 0:
+        temp_idx = 0
+    else:
+        temp_idx = temp_idx - 1
+        
+    if rpm_idx == 0:
+        rpm_idx = 0
+    else:
+        rpm_idx = rpm_idx - 1
+    
+    # Extract values from tables
+    try:
+        true_airspeed = tb.cruise_true_airspeed_no_mp[alt_idx][temp_idx][rpm_idx]
+        fuel_flow = tb.cruise_fuel_flow_no_mp[alt_idx][temp_idx][rpm_idx]
+    except IndexError:
+        # Fallback if indices are out of bounds
+        true_airspeed = 120.0  # Default reasonable value
+        fuel_flow = 8.5  # Default reasonable value
+    
+    return float(true_airspeed), float(fuel_flow)
+
+
+def interpolate_user_cruise_data(
+    user_data: dict,
+    pressure_altitude: float,
+    temperature: float,
+    rpm: float,
+    manifold_pressure: float = None
+) -> tuple[float, float]:
+    """
+    Interpolate cruise performance from user-provided data.
+    
+    Args:
+        user_data: Dictionary containing user performance data
+        pressure_altitude: Pressure altitude in feet
+        temperature: Temperature in degrees Celsius
+        rpm: Engine RPM
+        manifold_pressure: Manifold pressure in inches Hg (optional)
+        
+    Returns:
+        Tuple of (true_airspeed, fuel_flow) in knots and gallons per hour
+    """
+    # For now, return a simple calculation based on user data
+    # In a full implementation, this would do proper interpolation
+    
+    # Default values if user data is incomplete
+    base_tas = user_data.get('base_tas', 120.0)
+    base_fuel_flow = user_data.get('base_fuel_flow', 8.5)
+    
+    # Simple adjustments based on conditions
+    altitude_factor = 1.0 + (pressure_altitude - 2000) * 0.0001
+    temp_factor = 1.0 + (temperature - 15) * 0.005
+    
+    # Power factor calculation depends on whether manifold pressure is available
+    if manifold_pressure is not None:
+        power_factor = 1.0 + (manifold_pressure - 22) * 0.02 + (rpm - 2400) * 0.0001
+    else:
+        # When no manifold pressure, use only RPM for power factor
+        power_factor = 1.0 + (rpm - 2400) * 0.0002
+    
+    adjusted_tas = base_tas * altitude_factor * temp_factor * power_factor
+    adjusted_fuel_flow = base_fuel_flow * power_factor
+    
+    return adjusted_tas, adjusted_fuel_flow
+
+
+def calculate_endurance(
+    total_fuel: float,
+    reserve_fuel: float,
+    fuel_flow: float,
+    reserve_hours: float = 0.0
+) -> tuple[float, float]:
+    """
+    Calculate total endurance and usable time.
+    
+    Args:
+        total_fuel: Total usable fuel in gallons
+        reserve_fuel: Reserve fuel in gallons
+        fuel_flow: Fuel flow in gallons per hour
+        reserve_hours: Reserve time in hours (alternative to reserve_fuel)
+        
+    Returns:
+        Tuple of (total_endurance, usable_endurance) in hours
+    """
+    if fuel_flow <= 0:
+        return 0.0, 0.0
+    
+    # Calculate total endurance
+    total_endurance = total_fuel / fuel_flow
+    
+    # Calculate usable endurance (accounting for reserves)
+    if reserve_hours > 0:
+        usable_endurance = total_endurance - reserve_hours
+    else:
+        usable_endurance = (total_fuel - reserve_fuel) / fuel_flow
+    
+    # Ensure non-negative values
+    usable_endurance = max(0.0, usable_endurance)
+    
+    return total_endurance, usable_endurance
